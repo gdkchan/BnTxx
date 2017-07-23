@@ -12,7 +12,7 @@ namespace BnTxx
             Console.ForegroundColor = ConsoleColor.Cyan;
 
             Console.WriteLine("BnTxx - Switch Binary Texture extractor by gdkchan");
-            Console.WriteLine("Version 0.1.0\n");
+            Console.WriteLine("Version 0.1.1\n");
 
             Console.ResetColor();
 
@@ -27,18 +27,18 @@ namespace BnTxx
                         switch (args[1].ToLower())
                         {
                             case "-list":
-                                const string InfoFmt = "{0,-48}{1,-8}{2,-8}{3,-8}{4,-8}";
+                                const string InfoFmt = "{0,-40}{1,-8}{2,-8}{3,-8}{4,-8}";
 
                                 Console.WriteLine(InfoFmt,
                                     "Name",
                                     "Width",
                                     "Height",
-                                    "Format",
-                                    "Length");
+                                    "Mips",
+                                    "Format");
 
                                 Console.WriteLine(InfoFmt,
-                                    "----",
-                                    "-----",
+                                    "------",
+                                    "------",
                                     "------",
                                     "------",
                                     "------");
@@ -49,8 +49,8 @@ namespace BnTxx
                                         Tex.Name,
                                         Tex.Width,
                                         Tex.Height,
-                                        Tex.Format,
-                                        Tex.Data.Length);
+                                        Tex.Mipmaps,
+                                        Tex.Format);
                                 }
                                 break;
 
@@ -88,22 +88,7 @@ namespace BnTxx
 
         static void ExtractTex(Texture Tex, string FileName)
         {
-            Bitmap Img = null;
-
-            switch (Tex.Format)
-            {
-                /*case TextureFormat.RGBA8888:
-                    Img = PixelDecoder.DecodeRGBA8888(Tex.Data, Tex.Width, Tex.Height);
-                    break;*/
-
-                case TextureFormat.BC1:
-                    Img = BCn.DecodeBC1(Tex.Data, Tex.Width, Tex.Height);
-                    break;
-
-                case TextureFormat.BC3:
-                    Img = BCn.DecodeBC3(Tex.Data, Tex.Width, Tex.Height);
-                    break;
-            }
+            PixelDecoder.TryDecode(Tex, out Bitmap Img);
 
             if (Img != null)
             {
@@ -123,7 +108,7 @@ namespace BnTxx
 
         static void PrintUsage()
         {
-            Console.WriteLine("Please pass the *.istorage file name as an argument to this tool!");
+            Console.WriteLine("Please pass the *.bntx file name as an argument to this tool!");
         }
     }
 }

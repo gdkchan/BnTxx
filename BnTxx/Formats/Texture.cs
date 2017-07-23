@@ -6,6 +6,8 @@
 
         public int Width;
         public int Height;
+        public int BlockSize;
+        public int Mipmaps;
 
         public byte[] Data;
 
