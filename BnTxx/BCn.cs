@@ -16,7 +16,9 @@ namespace BnTxx
             {
                 for (int X = 0; X < Width / 4; X++)
                 {
-                    int Offset = PixelDecoder.GetSwizzledAddressBC1(X, Y, XB, YB) * 8;
+                    int Offset = PixelDecoder.GetSwizzledAddressBC1(X, Y, XB, YB, Width / 4) * 8;
+
+                    Offset %= Data.Length;
 
                     byte[] Tile = BCnDecodeTile(Data, Offset, true);
 
@@ -53,7 +55,9 @@ namespace BnTxx
             {
                 for (int X = 0; X < Width / 4; X++)
                 {
-                    int Offset = PixelDecoder.GetSwizzledAddressBC2_3(X, Y, XB, YB) * 16;
+                    int Offset = PixelDecoder.GetSwizzledAddressBC2_3(X, Y, XB, YB, Width / 4) * 16;
+
+                    Offset %= Data.Length;
 
                     byte[] Tile = BCnDecodeTile(Data, Offset + 8, false);
 
@@ -97,7 +101,9 @@ namespace BnTxx
             {
                 for (int X = 0; X < Width / 4; X++)
                 {
-                    int Offset = PixelDecoder.GetSwizzledAddressBC2_3(X, Y, XB, YB) * 16;
+                    int Offset = PixelDecoder.GetSwizzledAddressBC2_3(X, Y, XB, YB, Width / 4) * 16;
+
+                    Offset %= Data.Length;
 
                     byte[] Tile = BCnDecodeTile(Data, Offset + 8, false);
 
@@ -121,10 +127,126 @@ namespace BnTxx
                         {
                             int OOffset = (X * 4 + TX + (Y * 4 + TY) * Width) * 4;
 
+                            byte AlphaPx = Alpha[(AlphaCh >> (TY * 12 + TX * 3)) & 7];
+
                             Output[OOffset + 0] = Tile[TOffset + 0];
                             Output[OOffset + 1] = Tile[TOffset + 1];
                             Output[OOffset + 2] = Tile[TOffset + 2];
-                            Output[OOffset + 3] = Alpha[(AlphaCh >> (TY * 12 + TX * 3)) & 7];
+                            Output[OOffset + 3] = AlphaPx;
+
+                            TOffset += 4;
+                        }
+                    }
+                }
+            }
+
+            return PixelDecoder.GetBitmap(Output, Width, Height);
+        }
+
+        public static Bitmap DecodeBC4(byte[] Data, int Width, int Height)
+        {
+            byte[] Output = new byte[Width * Height * 4];
+
+            int XB = BitUtils.CountZeros(BitUtils.Pow2RoundUp(Width)  / 4);
+            int YB = BitUtils.CountZeros(BitUtils.Pow2RoundUp(Height) / 4);
+
+            for (int Y = 0; Y < Height / 4; Y++)
+            {
+                for (int X = 0; X < Width / 4; X++)
+                {
+                    int Offset = PixelDecoder.GetSwizzledAddressBC1(X, Y, XB, YB, Width / 4) * 8;
+
+                    Offset %= Data.Length;
+
+                    byte[] Red = new byte[8];
+
+                    Red[0] = Data[Offset + 0];
+                    Red[1] = Data[Offset + 1];
+
+                    CalculateBC3Alpha(Red);
+
+                    int RedLow  = Get32(Data, Offset + 2);
+                    int RedHigh = Get16(Data, Offset + 6);
+
+                    ulong RedCh = (uint)RedLow | (ulong)RedHigh << 32;
+
+                    int TOffset = 0;
+
+                    for (int TY = 0; TY < 4; TY++)
+                    {
+                        for (int TX = 0; TX < 4; TX++)
+                        {
+                            int OOffset = (X * 4 + TX + (Y * 4 + TY) * Width) * 4;
+
+                            byte RedPx = Red[(RedCh >> (TY * 12 + TX * 3)) & 7];
+
+                            Output[OOffset + 0] = 0;
+                            Output[OOffset + 1] = 0;
+                            Output[OOffset + 2] = RedPx;
+                            Output[OOffset + 3] = 0xff;
+
+                            TOffset += 4;
+                        }
+                    }
+                }
+            }
+
+            return PixelDecoder.GetBitmap(Output, Width, Height);
+        }
+
+        public static Bitmap DecodeBC5(byte[] Data, int Width, int Height)
+        {
+            byte[] Output = new byte[Width * Height * 4];
+
+            int XB = BitUtils.CountZeros(BitUtils.Pow2RoundUp(Width)  / 4);
+            int YB = BitUtils.CountZeros(BitUtils.Pow2RoundUp(Height) / 4);
+
+            for (int Y = 0; Y < Height / 4; Y++)
+            {
+                for (int X = 0; X < Width / 4; X++)
+                {
+                    int Offset = PixelDecoder.GetSwizzledAddressBC2_3(X, Y, XB, YB, Width / 4) * 16;
+
+                    Offset %= Data.Length;
+
+                    byte[] Red   = new byte[8];
+                    byte[] Green = new byte[8];
+
+                    Red[0]   = Data[Offset + 0];
+                    Red[1]   = Data[Offset + 1];
+
+                    Green[0] = Data[Offset + 8];
+                    Green[1] = Data[Offset + 9];
+
+                    CalculateBC3Alpha(Red);
+                    CalculateBC3Alpha(Green);
+
+                    int RedLow    = Get32(Data, Offset + 2);
+                    int RedHigh   = Get16(Data, Offset + 6);
+
+                    int GreenLow  = Get32(Data, Offset + 10);
+                    int GreenHigh = Get16(Data, Offset + 14);
+
+                    ulong RedCh   = (uint)RedLow   | (ulong)RedHigh   << 32;
+                    ulong GreenCh = (uint)GreenLow | (ulong)GreenHigh << 32;
+
+                    int TOffset = 0;
+
+                    for (int TY = 0; TY < 4; TY++)
+                    {
+                        for (int TX = 0; TX < 4; TX++)
+                        {
+                            int Shift = TY * 12 + TX * 3;
+
+                            int OOffset = (X * 4 + TX + (Y * 4 + TY) * Width) * 4;
+
+                            byte RedPx   = Red  [(RedCh   >> Shift) & 7];
+                            byte GreenPx = Green[(GreenCh >> Shift) & 7];
+
+                            Output[OOffset + 0] = 0;
+                            Output[OOffset + 1] = GreenPx;
+                            Output[OOffset + 2] = RedPx;
+                            Output[OOffset + 3] = 0xff;
 
                             TOffset += 4;
                         }

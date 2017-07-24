@@ -13,48 +13,45 @@ namespace BnTxx
         private delegate Bitmap DecodeFunc(byte[] Buffer, int Width, int Height);
 
         private static
-            Dictionary<TextureFormat, DecodeFunc> DecodeFuncs = new
-            Dictionary<TextureFormat, DecodeFunc>()
+            Dictionary<TextureFormatType, DecodeFunc> DecodeFuncs = new
+            Dictionary<TextureFormatType, DecodeFunc>()
         {
-            { TextureFormat.RGBA8888, DecodeRGBA8888 },
-            { TextureFormat.BC1,      BCn.DecodeBC1  },
-            { TextureFormat.BC3,      BCn.DecodeBC3  }
+            { TextureFormatType.RGB565,   DecodeRGB565   },
+            { TextureFormatType.RGBA8888, DecodeRGBA8888 },
+            { TextureFormatType.BC1,      BCn.DecodeBC1  },
+            { TextureFormatType.BC2,      BCn.DecodeBC2  },
+            { TextureFormatType.BC3,      BCn.DecodeBC3  },
+            { TextureFormatType.BC4,      BCn.DecodeBC4  },
+            { TextureFormatType.BC5,      BCn.DecodeBC5  }
         };
 
         public static bool TryDecode(Texture Tex, out Bitmap Img)
         {
-            if (DecodeFuncs.ContainsKey(Tex.Format))
+            if (DecodeFuncs.ContainsKey(Tex.FormatType))
             {
-                if (BitUtils.IsPow2(Tex.Width))
-                {
-                    Img = DecodeFuncs[Tex.Format](
-                        Tex.Data,
-                        Tex.Width,
-                        Tex.Height);
-                }
-                else
-                {
-                    Img = new Bitmap(Tex.Width, Tex.Height);
+                int TexWidth  = RoundSize(Tex.Width);
+                int TexHeight = RoundSize(Tex.Height);
 
-                    using (Graphics g = Graphics.FromImage(Img))
+                Img = DecodeFuncs[Tex.FormatType](
+                    Tex.Data,
+                    TexWidth,
+                    TexHeight);
+
+                if (TexWidth  != Tex.Width ||
+                    TexHeight != Tex.Height)
+                {
+                    Bitmap Output = new Bitmap(Tex.Width, Tex.Height);
+
+                    using (Graphics g = Graphics.FromImage(Output))
                     {
-                        int BlockSize = Tex.BlockSize;
+                        Rectangle Rect = new Rectangle(0, 0, Tex.Width, Tex.Height);
 
-                        int Chuncks = Tex.Height / BlockSize + 1;
-
-                        Bitmap Plain = DecodeFuncs[Tex.Format](
-                            Tex.Data,
-                            Tex.Width * Chuncks,
-                            BlockSize);
-
-                        for (int i = 0; i < Chuncks; i++)
-                        {
-                            Rectangle Src = new Rectangle(i * Tex.Width, 0, Tex.Width, BlockSize);
-                            Rectangle Dst = new Rectangle(0, i * BlockSize, Tex.Width, BlockSize);
-
-                            g.DrawImage(Plain, Dst, Src, GraphicsUnit.Pixel);
-                        }
+                        g.DrawImage(Img, Rect, Rect, GraphicsUnit.Pixel);
                     }
+
+                    Img.Dispose();
+
+                    Img = Output;
                 }
 
                 return true;
@@ -65,15 +62,52 @@ namespace BnTxx
             return false;
         }
 
-        public static int GetDataLength(int Width, int Height, TextureFormat Fmt)
+        private static int RoundSize(int Size)
         {
-            switch (Fmt)
+            if ((Size & 0x0f) != 0)
             {
-                case TextureFormat.RGBA8888: return (Width * Height) * 4;
-                case TextureFormat.BC1:      return (Width * Height) / 2;
-                case TextureFormat.BC3:      return (Width * Height);
-                default:                     return -1;
+                Size &= ~0x0f;
+                Size +=  0x10;
             }
+
+            return Size;
+        }
+
+        public static Bitmap DecodeRGB565(byte[] Buffer, int Width, int Height)
+        {
+            byte[] Output = new byte[Width * Height * 4];
+
+            int OOffset = 0;
+
+            int XB = BitUtils.CountZeros(BitUtils.Pow2RoundUp(Width));
+            int YB = BitUtils.CountZeros(BitUtils.Pow2RoundUp(Height));
+
+            for (int Y = 0; Y < Height; Y++)
+            {
+                for (int X = 0; X < Width; X++)
+                {
+                    int IOffs = GetSwizzledAddressRGBA16(X, Y, XB, YB, Width) * 2;
+
+                    IOffs %= Buffer.Length;
+
+                    int Value =
+                        Buffer[IOffs + 0] << 0 |
+                        Buffer[IOffs + 1] << 8;
+
+                    int R = ((Value >>  0) & 0x1f) << 3;
+                    int G = ((Value >>  5) & 0x3f) << 2;
+                    int B = ((Value >> 11) & 0x1f) << 3;
+
+                    Output[OOffset + 0] = (byte)(B | (B >> 5));
+                    Output[OOffset + 1] = (byte)(G | (G >> 6));
+                    Output[OOffset + 2] = (byte)(R | (R >> 5));
+                    Output[OOffset + 3] = 0xff;
+
+                    OOffset += 4;
+                }
+            }
+
+            return GetBitmap(Output, Width, Height);
         }
 
         public static Bitmap DecodeRGBA8888(byte[] Buffer, int Width, int Height)
@@ -89,7 +123,9 @@ namespace BnTxx
             {
                 for (int X = 0; X < Width; X++)
                 {
-                    int IOffs = GetSwizzledAddressRGBA32(X, Y, XB, YB) * 4;
+                    int IOffs = GetSwizzledAddressRGBA32(X, Y, XB, YB, Width) * 4;
+
+                    IOffs %= Buffer.Length;
 
                     Output[OOffset + 0] = Buffer[IOffs + 2];
                     Output[OOffset + 1] = Buffer[IOffs + 1];
@@ -103,22 +139,32 @@ namespace BnTxx
             return GetBitmap(Output, Width, Height);
         }
 
-        public static int GetSwizzledAddressRGBA32(int X, int Y, int XB, int YB)
+        public static int GetSwizzledAddressRGBA8(int X, int Y, int XB, int YB, int Width)
         {
-            return GetSwizzledAddress(X, Y, XB, YB, 2);
+            return GetSwizzledAddress(X, Y, XB, YB, Width, 4);
         }
 
-        public static int GetSwizzledAddressBC1(int X, int Y, int XB, int YB)
+        public static int GetSwizzledAddressRGBA16(int X, int Y, int XB, int YB, int Width)
         {
-            return GetSwizzledAddress(X, Y, XB, YB, 1);
+            return GetSwizzledAddress(X, Y, XB, YB, Width, 3);
         }
 
-        public static int GetSwizzledAddressBC2_3(int X, int Y, int XB, int YB)
+        public static int GetSwizzledAddressRGBA32(int X, int Y, int XB, int YB, int Width)
         {
-            return GetSwizzledAddress(X, Y, XB, YB, 0);
+            return GetSwizzledAddress(X, Y, XB, YB, Width, 2);
         }
 
-        private static int GetSwizzledAddress(int X, int Y, int XB, int YB, int XBase)
+        public static int GetSwizzledAddressBC1(int X, int Y, int XB, int YB, int Width)
+        {
+            return GetSwizzledAddress(X, Y, XB, YB, Width, 1);
+        }
+
+        public static int GetSwizzledAddressBC2_3(int X, int Y, int XB, int YB, int Width)
+        {
+            return GetSwizzledAddress(X, Y, XB, YB, Width, 0);
+        }
+
+        private static int GetSwizzledAddress(int X, int Y, int XB, int YB,int Width, int XBase)
         {
             /*
              * Examples of patterns:
@@ -133,10 +179,12 @@ namespace BnTxx
             int Size    = XB + YB;
             int XCnt    = XBase;
             int YCnt    = 1;
+            int XUsed   = 0;
+            int YUsed   = 0;
             int Bit     = 0;
             int Address = 0;
 
-            while (Bit < Math.Min(Size, XBase + 9))
+            while (Bit < XBase + 9 && XUsed + XCnt < XB)
             {
                 int XMask = (1 << XCnt) - 1;
                 int YMask = (1 << YCnt) - 1;
@@ -147,17 +195,18 @@ namespace BnTxx
                 X >>= XCnt;
                 Y >>= YCnt;
 
-                XB -= XCnt;
-                YB -= YCnt;
+                XUsed += XCnt;
+                YUsed += YCnt;
 
                 Bit += XCnt + YCnt;
 
-                XCnt = Math.Min(XB, 1);
-                YCnt = Math.Min(YB, YCnt << 1);
+                XCnt = Math.Min(XB - XUsed, 1);
+                YCnt = Math.Min(YB - YUsed, YCnt << 1);
             }
 
-            Address |= X << Bit;
-            Address |= Y << Bit + XB;
+            Width >>= XUsed;
+
+            Address |= (X + Y * Width) << Bit;
 
             return Address;
         }

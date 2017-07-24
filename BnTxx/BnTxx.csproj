@@ -43,7 +43,8 @@
     <Compile Include="Formats\PatriciaTree.cs" />
     <Compile Include="Formats\PatriciaTreeNode.cs" />
     <Compile Include="Formats\Texture.cs" />
-    <Compile Include="Formats\TextureFormat.cs" />
+    <Compile Include="Formats\TextureFormatType.cs" />
+    <Compile Include="Formats\TextureFormatVar.cs" />
     <Compile Include="PixelDecoder.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -70,38 +70,38 @@ namespace BnTxx.Formats
                 Reader.BaseStream.Seek(InfoPtrsAddress + Index * 8, SeekOrigin.Begin);
                 Reader.BaseStream.Seek(Reader.ReadInt64(),          SeekOrigin.Begin);
 
+                long ppp = Reader.BaseStream.Position;
+
                 string BRTISignature = Reader.ReadString(4);
 
                 CheckSignature("BRTI", BRTISignature);
 
-                int    BRTILength0 = Reader.ReadInt32();
-                long   BRTILength1 = Reader.ReadInt64();
-                uint   Unknown10   = Reader.ReadUInt32();
-                ushort Unknown14   = Reader.ReadUInt16();
-                ushort Mipmaps     = Reader.ReadUInt16();
-                uint   Unknown18   = Reader.ReadUInt32();
-                uint   Format      = Reader.ReadUInt32();
-                uint   Unknown20   = Reader.ReadUInt32();
-                int    Width       = Reader.ReadInt32();
-                int    Height      = Reader.ReadInt32();
-                uint   Unknown2C   = Reader.ReadUInt32();
-                uint   Unknown30   = Reader.ReadUInt32();
-                uint   Unknown34   = Reader.ReadUInt32();
-                uint   Unknown38   = Reader.ReadUInt32();
-                uint   Unknown3C   = Reader.ReadUInt32();
-                uint   Unknown40   = Reader.ReadUInt32();
-                uint   Unknown44   = Reader.ReadUInt32();
-                uint   Unknown48   = Reader.ReadUInt32();
-                uint   Unknown4C   = Reader.ReadUInt32();
-                int    DataLength  = Reader.ReadInt32();
-                int    BlockSize   = Reader.ReadInt32();
-                uint   Unknown58   = Reader.ReadUInt32();
-                uint   Unknown5C   = Reader.ReadUInt32();
-                int    NameAddress = Reader.ReadInt32();
-                uint   Unknown64   = Reader.ReadUInt32();
-                uint   Unknown68   = Reader.ReadUInt32();
-                uint   Unknown6C   = Reader.ReadUInt32();
-                long   PtrsAddress = Reader.ReadInt64();
+                int    BRTILength0   = Reader.ReadInt32();
+                long   BRTILength1   = Reader.ReadInt64();
+                uint   Unknown10     = Reader.ReadUInt32();
+                ushort Unknown14     = Reader.ReadUInt16();
+                ushort Mipmaps       = Reader.ReadUInt16();
+                uint   Unknown18     = Reader.ReadUInt32();
+                uint   Format        = Reader.ReadUInt32();
+                uint   Unknown20     = Reader.ReadUInt32();
+                int    Width         = Reader.ReadInt32();
+                int    Height        = Reader.ReadInt32();
+                uint   Unknown2C     = Reader.ReadUInt32();
+                int    FacesCount    = Reader.ReadInt32();
+                int    ChannelsCount = Reader.ReadInt32();
+                uint   Unknown38     = Reader.ReadUInt32();
+                uint   Unknown3C     = Reader.ReadUInt32();
+                uint   Unknown40     = Reader.ReadUInt32();
+                uint   Unknown44     = Reader.ReadUInt32();
+                uint   Unknown48     = Reader.ReadUInt32();
+                uint   Unknown4C     = Reader.ReadUInt32();
+                int    DataLength    = Reader.ReadInt32();
+                int    BlockSize     = Reader.ReadInt32();
+                int    ChannelTypes  = Reader.ReadInt32();
+                uint   Unknown5C     = Reader.ReadUInt32();
+                long   NameAddress   = Reader.ReadInt64();
+                long   Unknown68     = Reader.ReadInt64();
+                long   PtrsAddress   = Reader.ReadInt64();
 
                 Reader.BaseStream.Seek(NameAddress, SeekOrigin.Begin);
 
@@ -112,15 +112,19 @@ namespace BnTxx.Formats
 
                 byte[] Data = Reader.ReadBytes(DataLength);
 
+                TextureFormatType FormatType    = (TextureFormatType)((Format >> 8) & 0xff);
+                TextureFormatVar  FormatVariant = (TextureFormatVar) ((Format >> 0) & 0xff);
+
                 Textures.Add(new Texture()
                 {
-                    Name      = Name,
-                    Width     = Width,
-                    Height    = Height,
-                    BlockSize = BlockSize,
-                    Mipmaps   = Mipmaps,
-                    Data      = Data,
-                    Format    = (TextureFormat)Format
+                    Name          = Name,
+                    Width         = Width,
+                    Height        = Height,
+                    BlockSize     = BlockSize,
+                    Mipmaps       = Mipmaps,
+                    Data          = Data,
+                    FormatType    = FormatType,
+                    FormatVariant = FormatVariant
                 });
             }
         }

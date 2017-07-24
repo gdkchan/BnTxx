@@ -11,6 +11,7 @@
 
         public byte[] Data;
 
-        public TextureFormat Format;
+        public TextureFormatType FormatType;
+        public TextureFormatVar  FormatVariant;
     }
 }

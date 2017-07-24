@@ -12,7 +12,7 @@ namespace BnTxx
             Console.ForegroundColor = ConsoleColor.Cyan;
 
             Console.WriteLine("BnTxx - Switch Binary Texture extractor by gdkchan");
-            Console.WriteLine("Version 0.1.1\n");
+            Console.WriteLine("Version 0.1.2\n");
 
             Console.ResetColor();
 
@@ -50,7 +50,7 @@ namespace BnTxx
                                         Tex.Width,
                                         Tex.Height,
                                         Tex.Mipmaps,
-                                        Tex.Format);
+                                        Tex.FormatType);
                                 }
                                 break;
 
