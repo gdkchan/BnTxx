@@ -2,8 +2,10 @@
 {
     public enum TextureFormatVar
     {
-        UNorm = 0,
-        SNorm = 1,
-        SRGB  = 6
+        UNorm  = 1,
+        SNorm  = 2,
+        Single = 5,
+        SRGB   = 6,
+        UHalf  = 10
     }
 }

@@ -1,13 +1,15 @@
-﻿using System.Drawing;
+﻿using BnTxx.Formats;
+using System;
+using System.Drawing;
 
 namespace BnTxx
 {
     static class BCn
     {
-        public static Bitmap DecodeBC1(byte[] Data, int Width, int Height)
+        public static Bitmap DecodeBC1(Texture Tex)
         {
-            int W = (Width  + 3) / 4;
-            int H = (Height + 3) / 4;
+            int W = (Tex.Width  + 3) / 4;
+            int H = (Tex.Height + 3) / 4;
 
             byte[] Output = new byte[W * H * 64];
 
@@ -19,9 +21,7 @@ namespace BnTxx
                 {
                     int Offset = Swizzle.GetSwizzledAddress64(X, Y) * 8;
 
-                    Offset %= Data.Length;
-
-                    byte[] Tile = BCnDecodeTile(Data, Offset, true);
+                    byte[] Tile = BCnDecodeTile(Tex.Data, Offset, true);
 
                     int TOffset = 0;
 
@@ -45,10 +45,10 @@ namespace BnTxx
             return PixelDecoder.GetBitmap(Output, W * 4, H * 4);
         }
 
-        public static Bitmap DecodeBC2(byte[] Data, int Width, int Height)
+        public static Bitmap DecodeBC2(Texture Tex)
         {
-            int W = (Width  + 3) / 4;
-            int H = (Height + 3) / 4;
+            int W = (Tex.Width  + 3) / 4;
+            int H = (Tex.Height + 3) / 4;
 
             byte[] Output = new byte[W * H * 64];
 
@@ -60,12 +60,10 @@ namespace BnTxx
                 {
                     int Offset = Swizzle.GetSwizzledAddress128(X, Y) * 16;
 
-                    Offset %= Data.Length;
+                    byte[] Tile = BCnDecodeTile(Tex.Data, Offset + 8, false);
 
-                    byte[] Tile = BCnDecodeTile(Data, Offset + 8, false);
-
-                    int AlphaLow  = Get32(Data, Offset + 0);
-                    int AlphaHigh = Get32(Data, Offset + 4);
+                    int AlphaLow  = Get32(Tex.Data, Offset + 0);
+                    int AlphaHigh = Get32(Tex.Data, Offset + 4);
 
                     ulong AlphaCh = (uint)AlphaLow | (ulong)AlphaHigh << 32;
 
@@ -93,10 +91,10 @@ namespace BnTxx
             return PixelDecoder.GetBitmap(Output, W * 4, H * 4);
         }
 
-        public static Bitmap DecodeBC3(byte[] Data, int Width, int Height)
+        public static Bitmap DecodeBC3(Texture Tex)
         {
-            int W = (Width  + 3) / 4;
-            int H = (Height + 3) / 4;
+            int W = (Tex.Width  + 3) / 4;
+            int H = (Tex.Height + 3) / 4;
 
             byte[] Output = new byte[W * H * 64];
 
@@ -108,19 +106,17 @@ namespace BnTxx
                 {
                     int Offset = Swizzle.GetSwizzledAddress128(X, Y) * 16;
 
-                    Offset %= Data.Length;
-
-                    byte[] Tile = BCnDecodeTile(Data, Offset + 8, false);
+                    byte[] Tile = BCnDecodeTile(Tex.Data, Offset + 8, false);
 
                     byte[] Alpha = new byte[8];
 
-                    Alpha[0] = Data[Offset + 0];
-                    Alpha[1] = Data[Offset + 1];
+                    Alpha[0] = Tex.Data[Offset + 0];
+                    Alpha[1] = Tex.Data[Offset + 1];
 
                     CalculateBC3Alpha(Alpha);
 
-                    int AlphaLow  = Get32(Data, Offset + 2);
-                    int AlphaHigh = Get16(Data, Offset + 6);
+                    int AlphaLow  = Get32(Tex.Data, Offset + 2);
+                    int AlphaHigh = Get16(Tex.Data, Offset + 6);
 
                     ulong AlphaCh = (uint)AlphaLow | (ulong)AlphaHigh << 32;
 
@@ -148,10 +144,10 @@ namespace BnTxx
             return PixelDecoder.GetBitmap(Output, W * 4, H * 4);
         }
 
-        public static Bitmap DecodeBC4(byte[] Data, int Width, int Height)
+        public static Bitmap DecodeBC4(Texture Tex)
         {
-            int W = (Width  + 3) / 4;
-            int H = (Height + 3) / 4;
+            int W = (Tex.Width  + 3) / 4;
+            int H = (Tex.Height + 3) / 4;
 
             byte[] Output = new byte[W * H * 64];
 
@@ -163,17 +159,15 @@ namespace BnTxx
                 {
                     int Offset = Swizzle.GetSwizzledAddress64(X, Y) * 8;
 
-                    Offset %= Data.Length;
-
                     byte[] Red = new byte[8];
 
-                    Red[0] = Data[Offset + 0];
-                    Red[1] = Data[Offset + 1];
+                    Red[0] = Tex.Data[Offset + 0];
+                    Red[1] = Tex.Data[Offset + 1];
 
                     CalculateBC3Alpha(Red);
 
-                    int RedLow  = Get32(Data, Offset + 2);
-                    int RedHigh = Get16(Data, Offset + 6);
+                    int RedLow  = Get32(Tex.Data, Offset + 2);
+                    int RedHigh = Get16(Tex.Data, Offset + 6);
 
                     ulong RedCh = (uint)RedLow | (ulong)RedHigh << 32;
 
@@ -187,8 +181,8 @@ namespace BnTxx
 
                             byte RedPx = Red[(RedCh >> (TY * 12 + TX * 3)) & 7];
 
-                            Output[OOffset + 0] = 0;
-                            Output[OOffset + 1] = 0;
+                            Output[OOffset + 0] = RedPx;
+                            Output[OOffset + 1] = RedPx;
                             Output[OOffset + 2] = RedPx;
                             Output[OOffset + 3] = 0xff;
 
@@ -201,10 +195,10 @@ namespace BnTxx
             return PixelDecoder.GetBitmap(Output, W * 4, H * 4);
         }
 
-        public static Bitmap DecodeBC5(byte[] Data, int Width, int Height)
+        public static Bitmap DecodeBC5(Texture Tex)
         {
-            int W = (Width  + 3) / 4;
-            int H = (Height + 3) / 4;
+            int W = (Tex.Width  + 3) / 4;
+            int H = (Tex.Height + 3) / 4;
 
             byte[] Output = new byte[W * H * 64];
 
@@ -216,25 +210,31 @@ namespace BnTxx
                 {
                     int Offset = Swizzle.GetSwizzledAddress128(X, Y) * 16;
 
-                    Offset %= Data.Length;
-
                     byte[] Red   = new byte[8];
                     byte[] Green = new byte[8];
 
-                    Red[0]   = Data[Offset + 0];
-                    Red[1]   = Data[Offset + 1];
+                    Red[0]   = Tex.Data[Offset + 0];
+                    Red[1]   = Tex.Data[Offset + 1];
 
-                    Green[0] = Data[Offset + 8];
-                    Green[1] = Data[Offset + 9];
+                    Green[0] = Tex.Data[Offset + 8];
+                    Green[1] = Tex.Data[Offset + 9];
 
-                    CalculateBC3Alpha(Red);
-                    CalculateBC3Alpha(Green);
+                    if (Tex.FormatVariant == TextureFormatVar.SNorm)
+                    {
+                        CalculateBC3AlphaS(Red);
+                        CalculateBC3AlphaS(Green);
+                    }
+                    else
+                    {
+                        CalculateBC3Alpha(Red);
+                        CalculateBC3Alpha(Green);
+                    }
 
-                    int RedLow    = Get32(Data, Offset + 2);
-                    int RedHigh   = Get16(Data, Offset + 6);
+                    int RedLow    = Get32(Tex.Data, Offset + 2);
+                    int RedHigh   = Get16(Tex.Data, Offset + 6);
 
-                    int GreenLow  = Get32(Data, Offset + 10);
-                    int GreenHigh = Get16(Data, Offset + 14);
+                    int GreenLow  = Get32(Tex.Data, Offset + 10);
+                    int GreenHigh = Get16(Tex.Data, Offset + 14);
 
                     ulong RedCh   = (uint)RedLow   | (ulong)RedHigh   << 32;
                     ulong GreenCh = (uint)GreenLow | (ulong)GreenHigh << 32;
@@ -252,10 +252,32 @@ namespace BnTxx
                             byte RedPx   = Red  [(RedCh   >> Shift) & 7];
                             byte GreenPx = Green[(GreenCh >> Shift) & 7];
 
-                            Output[OOffset + 0] = RedPx;
-                            Output[OOffset + 1] = RedPx;
-                            Output[OOffset + 2] = RedPx;
-                            Output[OOffset + 3] = GreenPx;
+                            if (Tex.FormatVariant == TextureFormatVar.SNorm)
+                            {
+                                RedPx   += 0x80;
+                                GreenPx += 0x80;
+                            }
+
+                            if (Tex.FormatVariant == TextureFormatVar.UNorm ||
+                                Tex.FormatVariant == TextureFormatVar.SNorm)
+                            {
+                                float NX = (RedPx   / 255f) * 2 - 1;
+                                float NY = (GreenPx / 255f) * 2 - 1;
+
+                                float NZ = (float)Math.Sqrt(1 - (NX * NX + NY * NY));
+
+                                Output[OOffset + 0] = Clamp((NZ + 1) * 0.5f);
+                                Output[OOffset + 1] = Clamp((NY + 1) * 0.5f);
+                                Output[OOffset + 2] = Clamp((NX + 1) * 0.5f);
+                                Output[OOffset + 3] = 0xff;
+                            }
+                            else
+                            {
+                                Output[OOffset + 0] = RedPx;
+                                Output[OOffset + 1] = RedPx;
+                                Output[OOffset + 2] = RedPx;
+                                Output[OOffset + 3] = GreenPx;
+                            }
 
                             TOffset += 4;
                         }
@@ -264,6 +286,22 @@ namespace BnTxx
             }
 
             return PixelDecoder.GetBitmap(Output, W * 4, H * 4);
+        }
+
+        private static byte Clamp(float Value)
+        {
+            if (Value > 1)
+            {
+                return 0xff;
+            }
+            else if (Value < 0)
+            {
+                return 0;
+            }
+            else
+            {
+                return (byte)(Value * 0xff);
+            }
         }
 
         private static void CalculateBC3Alpha(byte[] Alpha)
@@ -285,6 +323,29 @@ namespace BnTxx
                 else /* i == 7 */
                 {
                     Alpha[i] = 0xff;
+                }
+            }
+        }
+
+        private static void CalculateBC3AlphaS(byte[] Alpha)
+        {
+            for (int i = 2; i < 8; i++)
+            {
+                if ((sbyte)Alpha[0] > (sbyte)Alpha[1])
+                {
+                    Alpha[i] = (byte)(((8 - i) * (sbyte)Alpha[0] + (i - 1) * (sbyte)Alpha[1]) / 7);
+                }
+                else if (i < 6)
+                {
+                    Alpha[i] = (byte)(((6 - i) * (sbyte)Alpha[0] + (i - 1) * (sbyte)Alpha[1]) / 7);
+                }
+                else if (i == 6)
+                {
+                    Alpha[i] = 0x80;
+                }
+                else /* i == 7 */
+                {
+                    Alpha[i] = 0x7f;
                 }
             }
         }
