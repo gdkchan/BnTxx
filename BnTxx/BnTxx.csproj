@@ -49,6 +49,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Formats\InvalidSignatureException.cs" />
+    <Compile Include="SwizzleAddr.cs" />
     <Compile Include="Utilities\BitUtils.cs" />
     <Compile Include="Utilities\IOUtils.cs" />
   </ItemGroup>

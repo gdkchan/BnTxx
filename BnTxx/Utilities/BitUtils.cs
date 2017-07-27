@@ -41,5 +41,20 @@
 
             return Count;
         }
+
+        public static int LastOne(int Value)
+        {
+            int Position = 0;
+
+            for (int i = 0; i < 32; i++)
+            {
+                if ((Value & (1 << i)) != 0)
+                {
+                    Position = i + 1;
+                }
+            }
+
+            return Position;
+        }
     }
 }
