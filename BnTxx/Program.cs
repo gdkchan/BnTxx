@@ -12,7 +12,7 @@ namespace BnTxx
             Console.ForegroundColor = ConsoleColor.Cyan;
 
             Console.WriteLine("BnTxx - Switch Binary Texture extractor by gdkchan");
-            Console.WriteLine("Version 0.1.4\n");
+            Console.WriteLine("Version 0.1.5\n");
 
             Console.ResetColor();
 
@@ -27,16 +27,18 @@ namespace BnTxx
                         switch (args[1].ToLower())
                         {
                             case "-list":
-                                const string InfoFmt = "{0,-40}{1,-8}{2,-8}{3,-8}{4,-8}";
+                                const string InfoFmt = "{0,-40}{1,-7}{2,-7}{3,-7}{4,-9}{5,-9}";
 
                                 Console.WriteLine(InfoFmt,
                                     "Name",
                                     "Width",
                                     "Height",
                                     "Mips",
+                                    "Type",
                                     "Format");
 
                                 Console.WriteLine(InfoFmt,
+                                    "------",
                                     "------",
                                     "------",
                                     "------",
@@ -50,6 +52,7 @@ namespace BnTxx
                                         Tex.Width,
                                         Tex.Height,
                                         Tex.Mipmaps,
+                                        Tex.Type,
                                         Tex.FormatType);
                                 }
                                 break;
@@ -88,21 +91,60 @@ namespace BnTxx
 
         static void ExtractTex(Texture Tex, string FileName)
         {
-            PixelDecoder.TryDecode(Tex, out Bitmap Img);
-
-            if (Img != null)
+            if (Tex.FormatType >= TextureFormatType.ASTC4x4 &&
+                Tex.FormatType <= TextureFormatType.ASTC12x12)
             {
-                Console.WriteLine("Extracting " + Tex.Name + "...");
+                Console.WriteLine("Extracting " + Tex.Name + " (ASTC)...");
 
-                Img.Save(FileName);
+                FileName = FileName.Replace(Path.GetExtension(FileName), ".astc");
+
+                ASTC.Save(Tex, FileName);
             }
             else
             {
-                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Extracting " + Tex.Name + "...");
 
-                Console.WriteLine("ERROR: Texture " + Tex.Name + " have a unsupported format!");
+                Bitmap Img = null;
 
-                Console.ResetColor();
+                if (Tex.Type == TextureType.Cube)
+                {
+                    int Length = Tex.Data.Length / Tex.Faces;
+
+                    int Offset = 0;
+
+                    string[] CubeFaces = new string[] { "x+", "x-", "y+", "y-", "z+", "z-" };
+
+                    for (int Index = 0; Index < Tex.Faces; Index++)
+                    {
+                        if (!PixelDecoder.TryDecode(Tex, out Img, Offset))
+                        {
+                            break;
+                        }
+
+                        string Ext = Path.GetExtension(FileName);
+
+                        Img.Save(FileName.Replace(Ext, "." + CubeFaces[Index] + Ext));
+
+                        Offset += Length;
+                    }
+                }
+                else
+                {
+                    PixelDecoder.TryDecode(Tex, out Img);
+                }
+
+                if (Img != null)
+                {
+                    Img.Save(FileName);
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+
+                    Console.WriteLine("ERROR: Texture " + Tex.Name + " have a unsupported format!");
+
+                    Console.ResetColor();
+                }
             }
         }
 

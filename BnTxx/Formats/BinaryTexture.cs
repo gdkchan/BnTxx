@@ -78,17 +78,19 @@ namespace BnTxx.Formats
 
                 int    BRTILength0   = Reader.ReadInt32();
                 long   BRTILength1   = Reader.ReadInt64();
-                uint   Unknown10     = Reader.ReadUInt32();
-                ushort Unknown14     = Reader.ReadUInt16();
+                byte   TileMode      = Reader.ReadByte();
+                byte   Dimensions    = Reader.ReadByte();
+                ushort Flags         = Reader.ReadUInt16(); //0 or 1
+                ushort SwizzleSize   = Reader.ReadUInt16();
                 ushort Mipmaps       = Reader.ReadUInt16();
-                uint   Unknown18     = Reader.ReadUInt32();
+                uint   Unknown18     = Reader.ReadUInt32(); //Always 1
                 uint   Format        = Reader.ReadUInt32();
-                uint   Unknown20     = Reader.ReadUInt32();
+                uint   Unknown20     = Reader.ReadUInt32(); //Always 32 (maybe out BPP?)
                 int    Width         = Reader.ReadInt32();
                 int    Height        = Reader.ReadInt32();
-                uint   Unknown2C     = Reader.ReadUInt32();
+                int    Depth         = Reader.ReadInt32();
                 int    FacesCount    = Reader.ReadInt32();
-                int    ChannelsCount = Reader.ReadInt32();
+                int    SizeRange     = Reader.ReadInt32();
                 uint   Unknown38     = Reader.ReadUInt32();
                 uint   Unknown3C     = Reader.ReadUInt32();
                 uint   Unknown40     = Reader.ReadUInt32();
@@ -96,11 +98,11 @@ namespace BnTxx.Formats
                 uint   Unknown48     = Reader.ReadUInt32();
                 uint   Unknown4C     = Reader.ReadUInt32();
                 int    DataLength    = Reader.ReadInt32();
-                int    BlockSize     = Reader.ReadInt32();
+                int    Alignment     = Reader.ReadInt32();
                 int    ChannelTypes  = Reader.ReadInt32();
-                uint   Unknown5C     = Reader.ReadUInt32();
+                int    TextureType   = Reader.ReadInt32();
                 long   NameAddress   = Reader.ReadInt64();
-                long   Unknown68     = Reader.ReadInt64();
+                long   ParentAddress = Reader.ReadInt64();
                 long   PtrsAddress   = Reader.ReadInt64();
 
                 Reader.BaseStream.Seek(NameAddress, SeekOrigin.Begin);
@@ -112,19 +114,21 @@ namespace BnTxx.Formats
 
                 byte[] Data = Reader.ReadBytes(DataLength);
 
-                TextureFormatType FormatType    = (TextureFormatType)((Format >> 8) & 0xff);
-                TextureFormatVar  FormatVariant = (TextureFormatVar) ((Format >> 0) & 0xff);
-
                 Textures.Add(new Texture()
                 {
                     Name          = Name,
                     Width         = Width,
                     Height        = Height,
-                    BlockSize     = BlockSize,
+                    Faces         = FacesCount,
                     Mipmaps       = Mipmaps,
                     Data          = Data,
-                    FormatType    = FormatType,
-                    FormatVariant = FormatVariant
+                    Channel0Type  = (ChannelType)((ChannelTypes >>  0) & 0xff),
+                    Channel1Type  = (ChannelType)((ChannelTypes >>  8) & 0xff),
+                    Channel2Type  = (ChannelType)((ChannelTypes >> 16) & 0xff),
+                    Channel3Type  = (ChannelType)((ChannelTypes >> 24) & 0xff),
+                    Type          = (TextureType)TextureType,
+                    FormatType    = (TextureFormatType)((Format >> 8) & 0xff),
+                    FormatVariant = (TextureFormatVar) ((Format >> 0) & 0xff)
                 });
             }
         }

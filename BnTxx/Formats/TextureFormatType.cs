@@ -2,9 +2,12 @@
 {
     public enum TextureFormatType
     {
-        RGB565    = 0x07,
-        L8A8      = 0x09,
-        RGBA8888  = 0x0b,
+        R5G6B5    = 0x07,
+        R8G8      = 0x09,
+        R16       = 0x0a,
+        R8G8B8A8  = 0x0b,
+        R11G11B10 = 0x0f,
+        R32       = 0x14,
         BC1       = 0x1a,
         BC2       = 0x1b,
         BC3       = 0x1c,

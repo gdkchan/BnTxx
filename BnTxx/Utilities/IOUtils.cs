@@ -31,5 +31,21 @@ namespace BnTxx.Utilities
         {
             return Reader.ReadString(Reader.ReadUInt16());
         }
+
+        public static int Get16(byte[] Data, int Address)
+        {
+            return
+                Data[Address + 0] << 0 |
+                Data[Address + 1] << 8;
+        }
+
+        public static int Get32(byte[] Data, int Address)
+        {
+            return
+                Data[Address + 0] << 0 |
+                Data[Address + 1] << 8 |
+                Data[Address + 2] << 16 |
+                Data[Address + 3] << 24;
+        }
     }
 }

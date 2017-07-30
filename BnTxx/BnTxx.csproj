@@ -38,13 +38,16 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ASTC.cs" />
     <Compile Include="BCn.cs" />
     <Compile Include="Formats\BinaryTexture.cs" />
+    <Compile Include="Formats\ChannelType.cs" />
     <Compile Include="Formats\PatriciaTree.cs" />
     <Compile Include="Formats\PatriciaTreeNode.cs" />
     <Compile Include="Formats\Texture.cs" />
     <Compile Include="Formats\TextureFormatType.cs" />
     <Compile Include="Formats\TextureFormatVar.cs" />
+    <Compile Include="Formats\TextureType.cs" />
     <Compile Include="PixelDecoder.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

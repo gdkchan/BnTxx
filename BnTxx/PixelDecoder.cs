@@ -1,34 +1,39 @@
 ﻿using BnTxx.Formats;
+using BnTxx.Utilities;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace BnTxx
 {
     static class PixelDecoder
     {
-        private delegate Bitmap DecodeFunc(Texture Tex);
+        private delegate Bitmap DecodeFunc(Texture Tex, int Offset);
 
         private static
             Dictionary<TextureFormatType, DecodeFunc> DecodeFuncs = new
             Dictionary<TextureFormatType, DecodeFunc>()
         {
-            { TextureFormatType.RGB565,   DecodeRGB565   },
-            { TextureFormatType.L8A8,     DecodeL8A8     },
-            { TextureFormatType.RGBA8888, DecodeRGBA8888 },
-            { TextureFormatType.BC1,      BCn.DecodeBC1  },
-            { TextureFormatType.BC2,      BCn.DecodeBC2  },
-            { TextureFormatType.BC3,      BCn.DecodeBC3  },
-            { TextureFormatType.BC4,      BCn.DecodeBC4  },
-            { TextureFormatType.BC5,      BCn.DecodeBC5  }
+            { TextureFormatType.R5G6B5,    DecodeR5G6B5    },
+            { TextureFormatType.R8G8,      DecodeR8G8      },
+            { TextureFormatType.R16,       DecodeR16       },
+            { TextureFormatType.R8G8B8A8,  DecodeR8G8B8A8  },
+            { TextureFormatType.R11G11B10, DecodeR11G11B10 },
+            { TextureFormatType.R32,       DecodeR32       },
+            { TextureFormatType.BC1,       BCn.DecodeBC1   },
+            { TextureFormatType.BC2,       BCn.DecodeBC2   },
+            { TextureFormatType.BC3,       BCn.DecodeBC3   },
+            { TextureFormatType.BC4,       BCn.DecodeBC4   },
+            { TextureFormatType.BC5,       BCn.DecodeBC5   }
         };
 
-        public static bool TryDecode(Texture Tex, out Bitmap Img)
+        public static bool TryDecode(Texture Tex, out Bitmap Img, int Offset = 0)
         {
             if (DecodeFuncs.ContainsKey(Tex.FormatType))
             {
-                Img = DecodeFuncs[Tex.FormatType](Tex);
+                Img = DecodeFuncs[Tex.FormatType](Tex, Offset);
 
                 if (Img.Width  != Tex.Width ||
                     Img.Height != Tex.Height)
@@ -55,7 +60,7 @@ namespace BnTxx
             return false;
         }
 
-        public static Bitmap DecodeRGB565(Texture Tex)
+        public static Bitmap DecodeR5G6B5(Texture Tex, int Offset)
         {
             byte[] Output = new byte[Tex.Width * Tex.Height * 4];
 
@@ -67,7 +72,7 @@ namespace BnTxx
             {
                 for (int X = 0; X < Tex.Width; X++)
                 {
-                    int IOffs = Swizzle.GetSwizzledAddress16(X, Y) * 2;
+                    int IOffs = Offset + Swizzle.GetSwizzledAddress16(X, Y) * 2;
 
                     int Value =
                         Tex.Data[IOffs + 0] << 0 |
@@ -80,16 +85,22 @@ namespace BnTxx
                     Output[OOffset + 0] = (byte)(B | (B >> 5));
                     Output[OOffset + 1] = (byte)(G | (G >> 6));
                     Output[OOffset + 2] = (byte)(R | (R >> 5));
-                    Output[OOffset + 3] = 0xff;
 
                     OOffset += 4;
                 }
             }
 
-            return GetBitmap(Output, Tex.Width, Tex.Height);
+            return PermChAndGetBitmap(
+                Output,
+                Tex.Width,
+                Tex.Height,
+                Tex.Channel0Type,
+                Tex.Channel1Type,
+                Tex.Channel2Type,
+                Tex.Channel3Type);
         }
 
-        public static Bitmap DecodeL8A8(Texture Tex)
+        public static Bitmap DecodeR8G8(Texture Tex, int Offset)
         {
             byte[] Output = new byte[Tex.Width * Tex.Height * 4];
 
@@ -101,21 +112,58 @@ namespace BnTxx
             {
                 for (int X = 0; X < Tex.Width; X++)
                 {
-                    int IOffs = Swizzle.GetSwizzledAddress16(X, Y) * 2;
+                    int IOffs = Offset + Swizzle.GetSwizzledAddress16(X, Y) * 2;
 
-                    Output[OOffset + 0] = Tex.Data[IOffs + 0];
-                    Output[OOffset + 1] = Tex.Data[IOffs + 0];
+                    Output[OOffset + 1] = Tex.Data[IOffs + 1];
                     Output[OOffset + 2] = Tex.Data[IOffs + 0];
-                    Output[OOffset + 3] = Tex.Data[IOffs + 1];
 
                     OOffset += 4;
                 }
             }
 
-            return GetBitmap(Output, Tex.Width, Tex.Height);
+            return PermChAndGetBitmap(
+                Output,
+                Tex.Width,
+                Tex.Height,
+                Tex.Channel0Type,
+                Tex.Channel1Type,
+                Tex.Channel2Type,
+                Tex.Channel3Type);
         }
 
-        public static Bitmap DecodeRGBA8888(Texture Tex)
+        public static Bitmap DecodeR16(Texture Tex, int Offset)
+        {
+            //TODO: What should be done with the extra precision?
+            //TODO: Can this be used with Half floats too?
+            byte[] Output = new byte[Tex.Width * Tex.Height * 4];
+
+            int OOffset = 0;
+
+            SwizzleAddr Swizzle = new SwizzleAddr(Tex.Width, Tex.Height, 0x20);
+
+            for (int Y = 0; Y < Tex.Height; Y++)
+            {
+                for (int X = 0; X < Tex.Width; X++)
+                {
+                    int IOffs = Offset + Swizzle.GetSwizzledAddress16(X, Y) * 2;
+
+                    Output[OOffset + 2] = Tex.Data[IOffs + 1];
+
+                    OOffset += 4;
+                }
+            }
+
+            return PermChAndGetBitmap(
+                Output,
+                Tex.Width,
+                Tex.Height,
+                Tex.Channel0Type,
+                Tex.Channel1Type,
+                Tex.Channel2Type,
+                Tex.Channel3Type);
+        }
+
+        public static Bitmap DecodeR8G8B8A8(Texture Tex, int Offset)
         {
             byte[] Output = new byte[Tex.Width * Tex.Height * 4];
 
@@ -127,7 +175,7 @@ namespace BnTxx
             {
                 for (int X = 0; X < Tex.Width; X++)
                 {
-                    int IOffs = Swizzle.GetSwizzledAddress32(X, Y) * 4;
+                    int IOffs = Offset + Swizzle.GetSwizzledAddress32(X, Y) * 4;
 
                     Output[OOffset + 0] = Tex.Data[IOffs + 2];
                     Output[OOffset + 1] = Tex.Data[IOffs + 1];
@@ -138,7 +186,133 @@ namespace BnTxx
                 }
             }
 
-            return GetBitmap(Output, Tex.Width, Tex.Height);
+            return PermChAndGetBitmap(
+                Output,
+                Tex.Width,
+                Tex.Height,
+                Tex.Channel0Type,
+                Tex.Channel1Type,
+                Tex.Channel2Type,
+                Tex.Channel3Type);
+        }
+
+        public static Bitmap DecodeR11G11B10(Texture Tex, int Offset)
+        {
+            //TODO: What should be done with the extra precision?
+            byte[] Output = new byte[Tex.Width * Tex.Height * 4];
+
+            int OOffset = 0;
+
+            SwizzleAddr Swizzle = new SwizzleAddr(Tex.Width, Tex.Height, 0x10);
+
+            for (int Y = 0; Y < Tex.Height; Y++)
+            {
+                for (int X = 0; X < Tex.Width; X++)
+                {
+                    int IOffs = Offset + Swizzle.GetSwizzledAddress32(X, Y) * 4;
+
+                    int Value = IOUtils.Get32(Tex.Data, IOffs);
+
+                    int R = (Value >>  0) & 0x7ff;
+                    int G = (Value >> 11) & 0x7ff;
+                    int B = (Value >> 22) & 0x3ff;
+
+                    Output[OOffset + 0] = (byte)(B >> 2);
+                    Output[OOffset + 1] = (byte)(G >> 3);
+                    Output[OOffset + 2] = (byte)(R >> 3);
+
+                    OOffset += 4;
+                }
+            }
+
+            return PermChAndGetBitmap(
+                Output,
+                Tex.Width,
+                Tex.Height,
+                Tex.Channel0Type,
+                Tex.Channel1Type,
+                Tex.Channel2Type,
+                Tex.Channel3Type);
+        }
+
+        public static Bitmap DecodeR32(Texture Tex, int Offset)
+        {
+            //TODO: What should be done with the extra precision?
+            //TODO: Can this be used with 32 bits fixed point 0.0.32 values too?
+            byte[] Output = new byte[Tex.Width * Tex.Height * 4];
+
+            int OOffset = 0;
+
+            SwizzleAddr Swizzle = new SwizzleAddr(Tex.Width, Tex.Height, 0x10);
+
+            using (MemoryStream MS = new MemoryStream(Tex.Data))
+            {
+                BinaryReader Reader = new BinaryReader(MS);
+
+                for (int Y = 0; Y < Tex.Height; Y++)
+                {
+                    for (int X = 0; X < Tex.Width; X++)
+                    {
+                        int IOffs = Offset + Swizzle.GetSwizzledAddress32(X, Y) * 4;
+
+                        MS.Seek(IOffs, SeekOrigin.Begin);
+
+                        float Value = Reader.ReadSingle();
+
+                        Output[OOffset + 2] = (byte)(Value * ((1f / 32) * 0xff));
+
+                        OOffset += 4;
+                    }
+                }
+            }
+
+            return PermChAndGetBitmap(
+                Output,
+                Tex.Width,
+                Tex.Height,
+                Tex.Channel0Type,
+                Tex.Channel1Type,
+                Tex.Channel2Type,
+                Tex.Channel3Type);
+        }
+
+        public static Bitmap PermChAndGetBitmap(
+            byte[]               Buffer,
+            int                  Width,
+            int                  Height,
+            params ChannelType[] ChTypes)
+        {
+            if (ChTypes.Length == 4 && (
+                ChTypes[0] != ChannelType.Red   ||
+                ChTypes[1] != ChannelType.Green ||
+                ChTypes[2] != ChannelType.Blue  ||
+                ChTypes[3] != ChannelType.Alpha))
+            {
+                for (int Offset = 0; Offset < Buffer.Length; Offset += 4)
+                {
+                    byte B = Buffer[Offset + 0];
+                    byte G = Buffer[Offset + 1];
+                    byte R = Buffer[Offset + 2];
+                    byte A = Buffer[Offset + 3];
+
+                    int j = 0;
+
+                    foreach (int i in new int[] { 2, 1, 0, 3 })
+                    {
+                        switch (ChTypes[j++])
+                        {
+                            case ChannelType.Zero:  Buffer[Offset + i] = 0;    break;
+                            case ChannelType.One:   Buffer[Offset + i] = 0xff; break;
+                            case ChannelType.Red:   Buffer[Offset + i] = R;    break;
+                            case ChannelType.Green: Buffer[Offset + i] = G;    break;
+                            case ChannelType.Blue:  Buffer[Offset + i] = B;    break;
+                            case ChannelType.Alpha: Buffer[Offset + i] = A;    break;
+                        }
+                    }
+                }
+            }
+
+            return GetBitmap(Buffer, Width, Height);
         }
 
         public static Bitmap GetBitmap(byte[] Buffer, int Width, int Height)
