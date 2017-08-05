@@ -11,7 +11,7 @@ namespace BnTxx
             int W = (Tex.Width  + BlkWidth  - 1) / BlkWidth;
             int H = (Tex.Height + BlkHeight - 1) / BlkHeight;
 
-            byte[] Output = new byte[W * H * (BlkWidth * BlkHeight * 4)];
+            byte[] Output = new byte[W * H * 16];
 
             SwizzleAddr Swizzle = new SwizzleAddr(W, H, 4);
 

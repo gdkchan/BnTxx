@@ -11,7 +11,7 @@ namespace BnTxx.Formats
 
         private List<string> Names;
 
-        public int Count => Names.Count;
+        public int Count { get { return Names.Count; } }
 
         public PatriciaTree()
         {

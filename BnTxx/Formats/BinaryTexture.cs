@@ -13,13 +13,13 @@ namespace BnTxx.Formats
 
         public Texture this[int Index]
         {
-            get => Textures[Index];
-            set => Textures[Index] = value;
+        	get { return Textures[Index]; }
+        	set { Textures[Index] = value; }
         }
 
-        public int Count => Textures.Count;
+        public int Count { get { return Textures.Count; } }
 
-        public bool IsReadOnly => false;
+        public bool IsReadOnly { get { return false; } }
 
         /* Initialization and loading */
 
