@@ -43,14 +43,7 @@ namespace BnTxx
                 }
             }
 
-            return PixelDecoder.PermChAndGetBitmap(
-                Output,
-                W * 4,
-                H * 4,
-                Tex.Channel0Type,
-                Tex.Channel1Type,
-                Tex.Channel2Type,
-                Tex.Channel3Type);
+            return PixelDecoder.GetBitmap(Output, W * 4, H * 4);
         }
 
         public static Bitmap DecodeBC2(Texture Tex, int Offset)
@@ -96,14 +89,7 @@ namespace BnTxx
                 }
             }
 
-            return PixelDecoder.PermChAndGetBitmap(
-                Output,
-                W * 4,
-                H * 4,
-                Tex.Channel0Type,
-                Tex.Channel1Type,
-                Tex.Channel2Type,
-                Tex.Channel3Type);
+            return PixelDecoder.GetBitmap(Output, W * 4, H * 4);
         }
 
         public static Bitmap DecodeBC3(Texture Tex, int Offset)
@@ -156,14 +142,7 @@ namespace BnTxx
                 }
             }
 
-            return PixelDecoder.PermChAndGetBitmap(
-                Output,
-                W * 4,
-                H * 4,
-                Tex.Channel0Type,
-                Tex.Channel1Type,
-                Tex.Channel2Type,
-                Tex.Channel3Type);
+            return PixelDecoder.GetBitmap(Output, W * 4, H * 4);
         }
 
         public static Bitmap DecodeBC4(Texture Tex, int Offset)
@@ -214,14 +193,7 @@ namespace BnTxx
                 }
             }
 
-            return PixelDecoder.PermChAndGetBitmap(
-                Output,
-                W * 4,
-                H * 4,
-                Tex.Channel0Type,
-                Tex.Channel1Type,
-                Tex.Channel2Type,
-                Tex.Channel3Type);
+            return PixelDecoder.GetBitmap(Output, W * 4, H * 4);
         }
 
         public static Bitmap DecodeBC5(Texture Tex, int Offset)
@@ -270,52 +242,65 @@ namespace BnTxx
 
                     int TOffset = 0;
 
-                    for (int TY = 0; TY < 4; TY++)
+                    if (Tex.FormatVariant == TextureFormatVar.SNorm)
                     {
-                        for (int TX = 0; TX < 4; TX++)
+                        for (int TY = 0; TY < 4; TY++)
                         {
-                            int Shift = TY * 12 + TX * 3;
-
-                            int OOffset = (X * 4 + TX + (Y * 4 + TY) * W * 4) * 4;
-
-                            byte RedPx   = Red  [(RedCh   >> Shift) & 7];
-                            byte GreenPx = Green[(GreenCh >> Shift) & 7];
-
-                            if (Tex.FormatVariant == TextureFormatVar.SNorm)
+                            for (int TX = 0; TX < 4; TX++)
                             {
-                                RedPx   += 0x80;
-                                GreenPx += 0x80;
+                                int Shift = TY * 12 + TX * 3;
+
+                                int OOffset = (X * 4 + TX + (Y * 4 + TY) * W * 4) * 4;
+
+                                byte RedPx   = Red  [(RedCh   >> Shift) & 7];
+                                byte GreenPx = Green[(GreenCh >> Shift) & 7];
+
+                                if (Tex.FormatVariant == TextureFormatVar.SNorm)
+                                {
+                                    RedPx   += 0x80;
+                                    GreenPx += 0x80;
+                                }
+
+                                float NX = (RedPx   / 255f) * 2 - 1;
+                                float NY = (GreenPx / 255f) * 2 - 1;
+
+                                float NZ = (float)Math.Sqrt(1 - (NX * NX + NY * NY));
+
+                                Output[OOffset + 0] = Clamp((NZ + 1) * 0.5f);
+                                Output[OOffset + 1] = Clamp((NY + 1) * 0.5f);
+                                Output[OOffset + 2] = Clamp((NX + 1) * 0.5f);
+                                Output[OOffset + 3] = 0xff;
+
+                                TOffset += 4;
                             }
+                        }
+                    }
+                    else
+                    {
+                        for (int TY = 0; TY < 4; TY++)
+                        {
+                            for (int TX = 0; TX < 4; TX++)
+                            {
+                                int Shift = TY * 12 + TX * 3;
 
-                            float NX = (RedPx   / 255f) * 2 - 1;
-                            float NY = (GreenPx / 255f) * 2 - 1;
+                                int OOffset = (X * 4 + TX + (Y * 4 + TY) * W * 4) * 4;
 
-                            float NZ = (float)Math.Sqrt(1 - (NX * NX + NY * NY));
+                                byte RedPx   = Red  [(RedCh   >> Shift) & 7];
+                                byte GreenPx = Green[(GreenCh >> Shift) & 7];
 
-                            Output[OOffset + 0] = Clamp((NZ + 1) * 0.5f);
-                            Output[OOffset + 1] = Clamp((NY + 1) * 0.5f);
-                            Output[OOffset + 2] = Clamp((NX + 1) * 0.5f);
+                                Output[OOffset + 0] = RedPx;
+                                Output[OOffset + 1] = RedPx;
+                                Output[OOffset + 2] = RedPx;
+                                Output[OOffset + 3] = GreenPx;
 
-                            TOffset += 4;
+                                TOffset += 4;
+                            }
                         }
                     }
                 }
             }
 
-            if (Tex.FormatVariant == TextureFormatVar.SNorm)
-            {
-                //If it's normal map then don't care about component permutation.
-                return PixelDecoder.GetBitmap(Output, W * 4, H * 4);
-            }
-
-            return PixelDecoder.PermChAndGetBitmap(
-                Output,
-                W * 4,
-                H * 4,
-                Tex.Channel0Type,
-                Tex.Channel1Type,
-                Tex.Channel2Type,
-                Tex.Channel3Type);
+            return PixelDecoder.GetBitmap(Output, W * 4, H * 4);
         }
 
         private static byte Clamp(float Value)

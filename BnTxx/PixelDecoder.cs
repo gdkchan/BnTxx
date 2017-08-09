@@ -85,19 +85,13 @@ namespace BnTxx
                     Output[OOffset + 0] = (byte)(B | (B >> 5));
                     Output[OOffset + 1] = (byte)(G | (G >> 6));
                     Output[OOffset + 2] = (byte)(R | (R >> 5));
+                    Output[OOffset + 3] = 0xff;
 
                     OOffset += 4;
                 }
             }
 
-            return PermChAndGetBitmap(
-                Output,
-                Tex.Width,
-                Tex.Height,
-                Tex.Channel0Type,
-                Tex.Channel1Type,
-                Tex.Channel2Type,
-                Tex.Channel3Type);
+            return GetBitmap(Output, Tex.Width, Tex.Height);
         }
 
         public static Bitmap DecodeR8G8(Texture Tex, int Offset)
@@ -116,19 +110,13 @@ namespace BnTxx
 
                     Output[OOffset + 1] = Tex.Data[IOffs + 1];
                     Output[OOffset + 2] = Tex.Data[IOffs + 0];
+                    Output[OOffset + 3] = 0xff;
 
                     OOffset += 4;
                 }
             }
 
-            return PermChAndGetBitmap(
-                Output,
-                Tex.Width,
-                Tex.Height,
-                Tex.Channel0Type,
-                Tex.Channel1Type,
-                Tex.Channel2Type,
-                Tex.Channel3Type);
+            return GetBitmap(Output, Tex.Width, Tex.Height);
         }
 
         public static Bitmap DecodeR16(Texture Tex, int Offset)
@@ -148,19 +136,13 @@ namespace BnTxx
                     int IOffs = Offset + Swizzle.GetSwizzledAddress16(X, Y) * 2;
 
                     Output[OOffset + 2] = Tex.Data[IOffs + 1];
+                    Output[OOffset + 3] = 0xff;
 
                     OOffset += 4;
                 }
             }
 
-            return PermChAndGetBitmap(
-                Output,
-                Tex.Width,
-                Tex.Height,
-                Tex.Channel0Type,
-                Tex.Channel1Type,
-                Tex.Channel2Type,
-                Tex.Channel3Type);
+            return GetBitmap(Output, Tex.Width, Tex.Height);
         }
 
         public static Bitmap DecodeR8G8B8A8(Texture Tex, int Offset)
@@ -186,14 +168,7 @@ namespace BnTxx
                 }
             }
 
-            return PermChAndGetBitmap(
-                Output,
-                Tex.Width,
-                Tex.Height,
-                Tex.Channel0Type,
-                Tex.Channel1Type,
-                Tex.Channel2Type,
-                Tex.Channel3Type);
+            return GetBitmap(Output, Tex.Width, Tex.Height);
         }
 
         public static Bitmap DecodeR11G11B10(Texture Tex, int Offset)
@@ -220,19 +195,13 @@ namespace BnTxx
                     Output[OOffset + 0] = (byte)(B >> 2);
                     Output[OOffset + 1] = (byte)(G >> 3);
                     Output[OOffset + 2] = (byte)(R >> 3);
+                    Output[OOffset + 3] = 0xff;
 
                     OOffset += 4;
                 }
             }
 
-            return PermChAndGetBitmap(
-                Output,
-                Tex.Width,
-                Tex.Height,
-                Tex.Channel0Type,
-                Tex.Channel1Type,
-                Tex.Channel2Type,
-                Tex.Channel3Type);
+            return GetBitmap(Output, Tex.Width, Tex.Height);
         }
 
         public static Bitmap DecodeR32(Texture Tex, int Offset)
@@ -260,20 +229,14 @@ namespace BnTxx
                         float Value = Reader.ReadSingle();
 
                         Output[OOffset + 2] = (byte)(Value * ((1f / 32) * 0xff));
+                        Output[OOffset + 3] = 0xff;
 
                         OOffset += 4;
                     }
                 }
             }
 
-            return PermChAndGetBitmap(
-                Output,
-                Tex.Width,
-                Tex.Height,
-                Tex.Channel0Type,
-                Tex.Channel1Type,
-                Tex.Channel2Type,
-                Tex.Channel3Type);
+            return GetBitmap(Output, Tex.Width, Tex.Height);
         }
 
         public static Bitmap PermChAndGetBitmap(
