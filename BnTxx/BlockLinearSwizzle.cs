@@ -1,4 +1,6 @@
-﻿namespace BnTxx
+﻿using System;
+
+namespace BnTxx
 {
     class BlockLinearSwizzle : ISwizzle
     {
@@ -16,7 +18,7 @@
             BhShift = CountLsbZeros(BlockHeight * 8);
             BppShift = CountLsbZeros(Bpp);
 
-            int WidthInGobs = Width * Bpp / 64;
+            int WidthInGobs = (int)Math.Ceiling(Width * Bpp / 64f);
 
             GobStride = 512 * BlockHeight * WidthInGobs;
 
