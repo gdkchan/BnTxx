@@ -1,6 +1,6 @@
 ﻿namespace BnTxx.Formats
 {
-    public enum TextureFormatVar
+    enum TextureFormatVar
     {
         UNorm  = 1,
         SNorm  = 2,

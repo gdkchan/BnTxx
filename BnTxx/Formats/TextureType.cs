@@ -1,6 +1,6 @@
 ﻿namespace BnTxx.Formats
 {
-    public enum TextureType
+    enum TextureType
     {
         Image1D = 0,
         Image2D = 1,

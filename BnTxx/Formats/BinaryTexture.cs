@@ -5,7 +5,7 @@ using System.IO;
 
 namespace BnTxx.Formats
 {
-    public class BinaryTexture : IList<Texture>
+    class BinaryTexture : IList<Texture>
     {
         public List<Texture> Textures;
 
@@ -70,65 +70,79 @@ namespace BnTxx.Formats
                 Reader.BaseStream.Seek(InfoPtrsAddress + Index * 8, SeekOrigin.Begin);
                 Reader.BaseStream.Seek(Reader.ReadInt64(),          SeekOrigin.Begin);
 
-                long ppp = Reader.BaseStream.Position;
-
                 string BRTISignature = Reader.ReadString(4);
 
                 CheckSignature("BRTI", BRTISignature);
 
-                int    BRTILength0   = Reader.ReadInt32();
-                long   BRTILength1   = Reader.ReadInt64();
-                byte   TileMode      = Reader.ReadByte();
-                byte   Dimensions    = Reader.ReadByte();
-                ushort Flags         = Reader.ReadUInt16(); //0 or 1
-                ushort SwizzleSize   = Reader.ReadUInt16();
-                ushort Mipmaps       = Reader.ReadUInt16();
-                uint   Unknown18     = Reader.ReadUInt32(); //Always 1
-                uint   Format        = Reader.ReadUInt32();
-                uint   Unknown20     = Reader.ReadUInt32(); //Always 32 (maybe out BPP?)
-                int    Width         = Reader.ReadInt32();
-                int    Height        = Reader.ReadInt32();
-                int    Depth         = Reader.ReadInt32();
-                int    FacesCount    = Reader.ReadInt32();
-                int    SizeRange     = Reader.ReadInt32();
-                uint   Unknown38     = Reader.ReadUInt32();
-                uint   Unknown3C     = Reader.ReadUInt32();
-                uint   Unknown40     = Reader.ReadUInt32();
-                uint   Unknown44     = Reader.ReadUInt32();
-                uint   Unknown48     = Reader.ReadUInt32();
-                uint   Unknown4C     = Reader.ReadUInt32();
-                int    DataLength    = Reader.ReadInt32();
-                int    Alignment     = Reader.ReadInt32();
-                int    ChannelTypes  = Reader.ReadInt32();
-                int    TextureType   = Reader.ReadInt32();
-                long   NameAddress   = Reader.ReadInt64();
-                long   ParentAddress = Reader.ReadInt64();
-                long   PtrsAddress   = Reader.ReadInt64();
+                int    BRTILength0      = Reader.ReadInt32();
+                long   BRTILength1      = Reader.ReadInt64();
+                byte   Flags            = Reader.ReadByte();
+                byte   Dimensions       = Reader.ReadByte();
+                ushort TileMode         = Reader.ReadUInt16();
+                ushort SwizzleSize      = Reader.ReadUInt16();
+                ushort MipmapCount      = Reader.ReadUInt16();
+                ushort MultiSampleCount = Reader.ReadUInt16();
+                ushort Reversed1A       = Reader.ReadUInt16();
+                uint   Format           = Reader.ReadUInt32();
+                uint   AccessFlags      = Reader.ReadUInt32();
+                int    Width            = Reader.ReadInt32();
+                int    Height           = Reader.ReadInt32();
+                int    Depth            = Reader.ReadInt32();
+                int    ArrayCount       = Reader.ReadInt32();
+                int    BlockHeightLog2  = Reader.ReadInt32();
+                int    Reserved38       = Reader.ReadInt32();
+                int    Reserved3C       = Reader.ReadInt32();
+                int    Reserved40       = Reader.ReadInt32();
+                int    Reserved44       = Reader.ReadInt32();
+                int    Reserved48       = Reader.ReadInt32();
+                int    Reserved4C       = Reader.ReadInt32();
+                int    DataLength       = Reader.ReadInt32();
+                int    Alignment        = Reader.ReadInt32();
+                int    ChannelTypes     = Reader.ReadInt32();
+                int    TextureType      = Reader.ReadInt32();
+                long   NameAddress      = Reader.ReadInt64();
+                long   ParentAddress    = Reader.ReadInt64();
+                long   PtrsAddress      = Reader.ReadInt64();
 
                 Reader.BaseStream.Seek(NameAddress, SeekOrigin.Begin);
 
                 string Name = Reader.ReadShortString();
 
-                Reader.BaseStream.Seek(PtrsAddress,        SeekOrigin.Begin);
-                Reader.BaseStream.Seek(Reader.ReadInt64(), SeekOrigin.Begin);
+                long[] MipOffsets = new long[MipmapCount];
+
+                Reader.BaseStream.Seek(PtrsAddress, SeekOrigin.Begin);
+
+                long BaseOffset = Reader.ReadInt64();
+
+                for (int Mip = 1; Mip < MipmapCount; Mip++)
+                {
+                    MipOffsets[Mip] = Reader.ReadInt64() - BaseOffset;
+                }
+
+                Reader.BaseStream.Seek(BaseOffset, SeekOrigin.Begin);
 
                 byte[] Data = Reader.ReadBytes(DataLength);
 
                 Textures.Add(new Texture()
                 {
-                    Name          = Name,
-                    Width         = Width,
-                    Height        = Height,
-                    Faces         = FacesCount,
-                    Mipmaps       = Mipmaps,
-                    Data          = Data,
-                    Channel0Type  = (ChannelType)((ChannelTypes >>  0) & 0xff),
-                    Channel1Type  = (ChannelType)((ChannelTypes >>  8) & 0xff),
-                    Channel2Type  = (ChannelType)((ChannelTypes >> 16) & 0xff),
-                    Channel3Type  = (ChannelType)((ChannelTypes >> 24) & 0xff),
-                    Type          = (TextureType)TextureType,
-                    FormatType    = (TextureFormatType)((Format >> 8) & 0xff),
-                    FormatVariant = (TextureFormatVar) ((Format >> 0) & 0xff)
+                    Name            = Name,
+                    Width           = Width,
+                    Height          = Height,
+                    ArrayCount      = ArrayCount,
+                    BlockHeightLog2 = BlockHeightLog2,
+                    MipmapCount     = MipmapCount,
+                    MipOffsets      = MipOffsets,
+                    Data            = Data,
+
+                    Channel0Type    = (ChannelType)((ChannelTypes >>  0) & 0xff),
+                    Channel1Type    = (ChannelType)((ChannelTypes >>  8) & 0xff),
+                    Channel2Type    = (ChannelType)((ChannelTypes >> 16) & 0xff),
+                    Channel3Type    = (ChannelType)((ChannelTypes >> 24) & 0xff),
+
+                    Type            = (TextureType)TextureType,
+
+                    FormatType      = (TextureFormatType)((Format >> 8) & 0xff),
+                    FormatVariant   = (TextureFormatVar) ((Format >> 0) & 0xff)
                 });
             }
         }

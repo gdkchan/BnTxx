@@ -14,13 +14,13 @@ namespace BnTxx
 
             byte[] Output = new byte[W * H * 64];
 
-            SwizzleAddr Swizzle = new SwizzleAddr(W, H, 8);
+            ISwizzle Swizzle = Tex.GetSwizzle();
 
             for (int Y = 0; Y < H; Y++)
             {
                 for (int X = 0; X < W; X++)
                 {
-                    int IOffs = Offset + Swizzle.GetSwizzledAddress64(X, Y) * 8;
+                    int IOffs = Offset + Swizzle.GetSwizzleOffset(X, Y);
 
                     byte[] Tile = BCnDecodeTile(Tex.Data, IOffs, true);
 
@@ -53,13 +53,13 @@ namespace BnTxx
 
             byte[] Output = new byte[W * H * 64];
 
-            SwizzleAddr Swizzle = new SwizzleAddr(W, H, 4);
+            ISwizzle Swizzle = Tex.GetSwizzle();
 
             for (int Y = 0; Y < H; Y++)
             {
                 for (int X = 0; X < W; X++)
                 {
-                    int IOffs = Offset + Swizzle.GetSwizzledAddress128(X, Y) * 16;
+                    int IOffs = Offset + Swizzle.GetSwizzleOffset(X, Y);
 
                     byte[] Tile = BCnDecodeTile(Tex.Data, IOffs + 8, false);
 
@@ -99,13 +99,13 @@ namespace BnTxx
 
             byte[] Output = new byte[W * H * 64];
 
-            SwizzleAddr Swizzle = new SwizzleAddr(W, H, 4);
+            ISwizzle Swizzle = Tex.GetSwizzle();
 
             for (int Y = 0; Y < H; Y++)
             {
                 for (int X = 0; X < W; X++)
                 {
-                    int IOffs = Offset + Swizzle.GetSwizzledAddress128(X, Y) * 16;
+                    int IOffs = Offset + Swizzle.GetSwizzleOffset(X, Y);
 
                     byte[] Tile = BCnDecodeTile(Tex.Data, IOffs + 8, false);
 
@@ -152,13 +152,13 @@ namespace BnTxx
 
             byte[] Output = new byte[W * H * 64];
 
-            SwizzleAddr Swizzle = new SwizzleAddr(W, H, 8);
+            ISwizzle Swizzle = Tex.GetSwizzle();
 
             for (int Y = 0; Y < H; Y++)
             {
                 for (int X = 0; X < W; X++)
                 {
-                    int IOffs = Swizzle.GetSwizzledAddress64(X, Y) * 8;
+                    int IOffs = Offset + Swizzle.GetSwizzleOffset(X, Y);
 
                     byte[] Red = new byte[8];
 
@@ -203,13 +203,13 @@ namespace BnTxx
 
             byte[] Output = new byte[W * H * 64];
 
-            SwizzleAddr Swizzle = new SwizzleAddr(W, H, 4);
+            ISwizzle Swizzle = Tex.GetSwizzle();
 
             for (int Y = 0; Y < H; Y++)
             {
                 for (int X = 0; X < W; X++)
                 {
-                    int IOffs = Swizzle.GetSwizzledAddress128(X, Y) * 16;
+                    int IOffs = Offset + Swizzle.GetSwizzleOffset(X, Y);
 
                     byte[] Red   = new byte[8];
                     byte[] Green = new byte[8];

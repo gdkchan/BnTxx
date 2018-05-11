@@ -13,7 +13,7 @@ namespace BnTxx
 
             byte[] Output = new byte[W * H * 16];
 
-            SwizzleAddr Swizzle = new SwizzleAddr(W, H, 4);
+            ISwizzle Swizzle = Tex.GetSwizzle();
 
             int OOffset = 0;
 
@@ -21,7 +21,7 @@ namespace BnTxx
             {
                 for (int X = 0; X < W; X++)
                 {
-                    int Offset = Swizzle.GetSwizzledAddress128(X, Y) * 16;
+                    int Offset = Swizzle.GetSwizzleOffset(X, Y);
 
                     Buffer.BlockCopy(Tex.Data, Offset, Output, OOffset, 16);
 

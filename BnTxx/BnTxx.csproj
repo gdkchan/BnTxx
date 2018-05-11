@@ -40,6 +40,7 @@
   <ItemGroup>
     <Compile Include="ASTC.cs" />
     <Compile Include="BCn.cs" />
+    <Compile Include="BlockLinearSwizzle.cs" />
     <Compile Include="Formats\BinaryTexture.cs" />
     <Compile Include="Formats\ChannelType.cs" />
     <Compile Include="Formats\PatriciaTree.cs" />
@@ -48,11 +49,11 @@
     <Compile Include="Formats\TextureFormatType.cs" />
     <Compile Include="Formats\TextureFormatVar.cs" />
     <Compile Include="Formats\TextureType.cs" />
+    <Compile Include="ISwizzle.cs" />
     <Compile Include="PixelDecoder.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Formats\InvalidSignatureException.cs" />
-    <Compile Include="SwizzleAddr.cs" />
     <Compile Include="Utilities\BitUtils.cs" />
     <Compile Include="Utilities\IOUtils.cs" />
   </ItemGroup>

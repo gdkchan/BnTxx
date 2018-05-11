@@ -1,6 +1,6 @@
 ﻿namespace BnTxx.Formats
 {
-    public enum ChannelType
+    enum ChannelType
     {
         Zero,
         One,

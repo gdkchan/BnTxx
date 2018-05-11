@@ -1,5 +1,6 @@
 ﻿using BnTxx.Formats;
 using BnTxx.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -66,13 +67,13 @@ namespace BnTxx
 
             int OOffset = 0;
 
-            SwizzleAddr Swizzle = new SwizzleAddr(Tex.Width, Tex.Height, 0x20);
+            ISwizzle Swizzle = Tex.GetSwizzle();
 
             for (int Y = 0; Y < Tex.Height; Y++)
             {
                 for (int X = 0; X < Tex.Width; X++)
                 {
-                    int IOffs = Offset + Swizzle.GetSwizzledAddress16(X, Y) * 2;
+                    int IOffs = Offset + Swizzle.GetSwizzleOffset(X, Y);
 
                     int Value =
                         Tex.Data[IOffs + 0] << 0 |
@@ -100,13 +101,13 @@ namespace BnTxx
 
             int OOffset = 0;
 
-            SwizzleAddr Swizzle = new SwizzleAddr(Tex.Width, Tex.Height, 0x20);
+            ISwizzle Swizzle = Tex.GetSwizzle();
 
             for (int Y = 0; Y < Tex.Height; Y++)
             {
                 for (int X = 0; X < Tex.Width; X++)
                 {
-                    int IOffs = Offset + Swizzle.GetSwizzledAddress16(X, Y) * 2;
+                    int IOffs = Offset + Swizzle.GetSwizzleOffset(X, Y);
 
                     Output[OOffset + 1] = Tex.Data[IOffs + 1];
                     Output[OOffset + 2] = Tex.Data[IOffs + 0];
@@ -127,13 +128,13 @@ namespace BnTxx
 
             int OOffset = 0;
 
-            SwizzleAddr Swizzle = new SwizzleAddr(Tex.Width, Tex.Height, 0x20);
+            ISwizzle Swizzle = Tex.GetSwizzle();
 
             for (int Y = 0; Y < Tex.Height; Y++)
             {
                 for (int X = 0; X < Tex.Width; X++)
                 {
-                    int IOffs = Offset + Swizzle.GetSwizzledAddress16(X, Y) * 2;
+                    int IOffs = Offset + Swizzle.GetSwizzleOffset(X, Y);
 
                     Output[OOffset + 2] = Tex.Data[IOffs + 1];
                     Output[OOffset + 3] = 0xff;
@@ -151,13 +152,13 @@ namespace BnTxx
 
             int OOffset = 0;
 
-            SwizzleAddr Swizzle = new SwizzleAddr(Tex.Width, Tex.Height, 0x10);
+            ISwizzle Swizzle = Tex.GetSwizzle();
 
             for (int Y = 0; Y < Tex.Height; Y++)
             {
                 for (int X = 0; X < Tex.Width; X++)
                 {
-                    int IOffs = Offset + Swizzle.GetSwizzledAddress32(X, Y) * 4;
+                    int IOffs = Offset + Swizzle.GetSwizzleOffset(X, Y);
 
                     Output[OOffset + 0] = Tex.Data[IOffs + 2];
                     Output[OOffset + 1] = Tex.Data[IOffs + 1];
@@ -178,13 +179,13 @@ namespace BnTxx
 
             int OOffset = 0;
 
-            SwizzleAddr Swizzle = new SwizzleAddr(Tex.Width, Tex.Height, 0x10);
+            ISwizzle Swizzle = Tex.GetSwizzle();
 
             for (int Y = 0; Y < Tex.Height; Y++)
             {
                 for (int X = 0; X < Tex.Width; X++)
                 {
-                    int IOffs = Offset + Swizzle.GetSwizzledAddress32(X, Y) * 4;
+                    int IOffs = Offset + Swizzle.GetSwizzleOffset(X, Y);
 
                     int Value = IOUtils.Get32(Tex.Data, IOffs);
 
@@ -212,7 +213,7 @@ namespace BnTxx
 
             int OOffset = 0;
 
-            SwizzleAddr Swizzle = new SwizzleAddr(Tex.Width, Tex.Height, 0x10);
+            ISwizzle Swizzle = Tex.GetSwizzle();
 
             using (MemoryStream MS = new MemoryStream(Tex.Data))
             {
@@ -222,7 +223,7 @@ namespace BnTxx
                 {
                     for (int X = 0; X < Tex.Width; X++)
                     {
-                        int IOffs = Offset + Swizzle.GetSwizzledAddress32(X, Y) * 4;
+                        int IOffs = Offset + Swizzle.GetSwizzleOffset(X, Y);
 
                         MS.Seek(IOffs, SeekOrigin.Begin);
 

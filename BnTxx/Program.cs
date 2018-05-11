@@ -12,7 +12,7 @@ namespace BnTxx
             Console.ForegroundColor = ConsoleColor.Cyan;
 
             Console.WriteLine("BnTxx - Switch Binary Texture extractor by gdkchan");
-            Console.WriteLine("Version 0.1.6\n");
+            Console.WriteLine("Version 0.2.0\n");
 
             Console.ResetColor();
 
@@ -51,7 +51,7 @@ namespace BnTxx
                                         Tex.Name,
                                         Tex.Width,
                                         Tex.Height,
-                                        Tex.Mipmaps,
+                                        Tex.MipmapCount,
                                         Tex.Type,
                                         Tex.FormatType);
                                 }
@@ -104,20 +104,29 @@ namespace BnTxx
             {
                 Console.WriteLine("Extracting " + Tex.Name + "...");
 
-                Bitmap Img = null;
+                void PrintWarning()
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+
+                    Console.WriteLine("ERROR: Texture " + Tex.Name + " have a unsupported format!");
+
+                    Console.ResetColor();
+                }
 
                 if (Tex.Type == TextureType.Cube)
                 {
-                    int Length = Tex.Data.Length / Tex.Faces;
+                    int Length = Tex.Data.Length / Tex.ArrayCount;
 
                     int Offset = 0;
 
                     string[] CubeFaces = new string[] { "x+", "x-", "y+", "y-", "z+", "z-" };
 
-                    for (int Index = 0; Index < Tex.Faces; Index++)
+                    for (int Index = 0; Index < Tex.ArrayCount; Index++)
                     {
-                        if (!PixelDecoder.TryDecode(Tex, out Img, Offset))
+                        if (!PixelDecoder.TryDecode(Tex, out Bitmap Img, Offset))
                         {
+                            PrintWarning();
+
                             break;
                         }
 
@@ -130,20 +139,42 @@ namespace BnTxx
                 }
                 else
                 {
-                    PixelDecoder.TryDecode(Tex, out Img);
-                }
+                    if (Tex.MipmapCount == 1)
+                    {
+                        if (PixelDecoder.TryDecode(Tex, out Bitmap Img))
+                        {
+                            Img.Save(FileName);
+                        }
+                        else
+                        {
+                            PrintWarning();
+                        }
+                    }
+                    else
+                    {
+                        for (int Index = 0; Index < Tex.MipmapCount; Index++)
+                        {
+                            if (!PixelDecoder.TryDecode(Tex, out Bitmap Img, (int)Tex.MipOffsets[Index]))
+                            {
+                                PrintWarning();
 
-                if (Img != null)
-                {
-                    Img.Save(FileName);
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
+                                break;
+                            }
 
-                    Console.WriteLine("ERROR: Texture " + Tex.Name + " have a unsupported format!");
+                            string Ext = Path.GetExtension(FileName);
 
-                    Console.ResetColor();
+                            Img.Save(FileName.Replace(Ext, "." + Index + "." + Ext));
+
+                            Tex.Width  = Math.Max(Tex.Width  >> 1, 1);
+                            Tex.Height = Math.Max(Tex.Height >> 1, 1);
+
+                            while (Tex.GetBlockHeight() * 8 > Tex.GetPow2HeightInTexels() && Tex.BlockHeightLog2 > 0)
+                            {
+                                Tex.BlockHeightLog2--;
+                            }
+                        }
+                    }
+                    
                 }
             }
         }

@@ -1,6 +1,6 @@
 ﻿namespace BnTxx.Formats
 {
-    public enum TextureFormatType
+    enum TextureFormatType
     {
         R5G6B5    = 0x07,
         R8G8      = 0x09,
