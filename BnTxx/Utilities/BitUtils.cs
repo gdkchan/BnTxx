@@ -1,4 +1,6 @@
-﻿namespace BnTxx.Utilities
+﻿using System;
+
+namespace BnTxx.Utilities
 {
     static class BitUtils
     {
@@ -40,6 +42,33 @@
             }
 
             return Count;
+        }
+
+        public static int GetBits32(byte[] buffer, int length, int index, ref int startBitPos, int bitLength)
+        {
+            if (bitLength > 32)
+                throw new ArgumentOutOfRangeException();
+
+            // Compute the starting byte index.
+            int byteIndex = index + (startBitPos / 8);
+            int bitshift = startBitPos % 8;
+
+            // Read bits accounting for byte split.
+            int value = 0;
+            if (bitshift + bitLength > 8)
+            {
+                value = (buffer[byteIndex] >> bitshift) | (buffer[byteIndex + 1] << (8 - bitshift));
+            }
+            else
+            {
+                value = buffer[byteIndex] >> bitshift;
+            }
+
+            // Mask only the bits we want.
+            value &= (1 << bitLength) - 1;
+
+            startBitPos += bitLength;
+            return value;
         }
     }
 }

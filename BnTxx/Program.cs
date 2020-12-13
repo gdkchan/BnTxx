@@ -12,7 +12,7 @@ namespace BnTxx
             Console.ForegroundColor = ConsoleColor.Cyan;
 
             Console.WriteLine("BnTxx - Switch Binary Texture extractor by gdkchan");
-            Console.WriteLine("Version 0.2.0\n");
+            Console.WriteLine("Version 0.3.0\n");
 
             Console.ResetColor();
 
@@ -74,6 +74,37 @@ namespace BnTxx
                         foreach (var Tex in BT.Textures)
                         {
                             ExtractTex(Tex);
+                        }
+                    }
+                }
+            }
+            else if (args.Length > 0 && Directory.Exists(args[0]) == true)
+            {
+                // Get a list of all texture files from the directory.
+                string[] textureFiles = Directory.GetFiles(args[0], "*.bntx", SearchOption.AllDirectories);
+                for (int i = 0; i < textureFiles.Length; i++)
+                {
+                    // Open the texture for reading.
+                    using (FileStream FS = new FileStream(textureFiles[i], FileMode.Open))
+                    {
+                        // Decode the texture so we can save it.
+                        BinaryTexture BT = new BinaryTexture(FS);
+
+                        // Extract the texture.
+                        if (BT.Textures.Count > 1)
+                        {
+                            // Create a new directory with the name of the texture file.
+                            string extractionFolder = string.Format("{0}\\{1}", Path.GetDirectoryName(textureFiles[i]), Path.GetFileNameWithoutExtension(textureFiles[i]));
+                            Directory.CreateDirectory(extractionFolder);
+
+                            // Extract the textures to the new directory.
+                            for (int x = 0; x < BT.Textures.Count; x++)
+                                ExtractTex(BT.Textures[x], Path.Combine(extractionFolder, BT.Textures[x].Name + ".png"));
+                        }
+                        else
+                        {
+                            // Extract the texture and preserve the original file name.
+                            ExtractTex(BT.Textures[0], string.Format("{0}\\{1}.png", Path.GetDirectoryName(textureFiles[i]), Path.GetFileNameWithoutExtension(textureFiles[i])));
                         }
                     }
                 }

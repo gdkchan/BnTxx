@@ -13,6 +13,7 @@
         BC3       = 0x1c,
         BC4       = 0x1d,
         BC5       = 0x1e,
+        BC7       = 0x20,
         ASTC4x4   = 0x2d,
         ASTC5x4   = 0x2e,
         ASTC5x5   = 0x2f,
