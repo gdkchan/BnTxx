@@ -27,7 +27,8 @@ namespace BnTxx
             { TextureFormatType.BC2,       BCn.DecodeBC2   },
             { TextureFormatType.BC3,       BCn.DecodeBC3   },
             { TextureFormatType.BC4,       BCn.DecodeBC4   },
-            { TextureFormatType.BC5,       BCn.DecodeBC5   }
+            { TextureFormatType.BC5,       BCn.DecodeBC5   },
+            { TextureFormatType.BC7,       BCn.DecodeBC7   }
         };
 
         public static bool TryDecode(Texture Tex, out Bitmap Img, int Offset = 0)
